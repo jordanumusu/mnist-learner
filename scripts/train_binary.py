@@ -1,12 +1,22 @@
 
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-def get_data():
-    transform = transforms.Compose([transforms.ToTensor()])
-    train_set = datasets.MNIST('./data', train=True, transform=transform, download=True)
-    test_set = datasets.MNIST('./data', train=False, transform=transform, download=True)
+import torch
+
+from PIL import Image
+from torch.utils.data import Subset
+
+def get_data(train=False):
+    dset = datasets.MNIST('./data', train=train, transform=transforms.ToTensor(), download=True)
+    labels = dset.targets
+
+    indices, = ((labels == 3) | (labels == 7)).nonzero(as_tuple=True)
+    x = Subset(dset, indices)
+
+    return x
 
 def main():
-    get_data()
+    
+
 if __name__ == "__main__":
-    main()
+    main() 
