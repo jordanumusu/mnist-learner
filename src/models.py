@@ -41,7 +41,7 @@ class SimpleNN:
         preds = xb @ self.w1 + self.b1
         preds = torch.relu(preds)
         preds = preds @ self.w2 + self.b2
-        return torch.sigmoid(preds)
+        return torch.sigmoid(preds).squeeze()
 
     @property
     def params(self):

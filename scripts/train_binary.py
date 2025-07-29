@@ -57,8 +57,8 @@ def main():
 
     print("\n -------- Simple NN Model ------------")
     nn_model = SimpleNN()
-    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.log_acc, lr=0.1)
-    learner.fit(50)
+    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.log_acc, lr=0.001)
+    learner.fit(5)
 
     # if os.path.exists('../model.pth'):
     #     learner1.load_checkpoint('model.pth')
