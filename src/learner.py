@@ -3,23 +3,24 @@ import json
 from pathlib import Path
 
 from torch.utils.data import DataLoader
-from .losses import l1_loss, l2_loss
+from .losses import l1_loss, l2_loss, mnist_loss
 from .optimizer import BasicOptimiser
 
 class Learner:
-    def __init__(self, model, train_dl, val_dl):
+    def __init__(self, model, train_dl, val_dl, metrics, lr=0.001):
         self.model = model
-        self.lr = 0.001
+        self.lr = lr
         self.train_dl = train_dl
         self.val_dl = val_dl
         self.opt = BasicOptimiser(self.model.params, self.lr)
+        self.metrics = metrics
         self.history = {'train_loss': [], 'val_loss': [], 'val_acc': []}
 
     def fit(self, n_epoch):
         for i in range(n_epoch):
             train_loss = self.train_epoch()
             val_loss = self._evaluate_loss(self.val_dl)
-            val_acc = self.evaluate_accuracy(self.val_dl)
+            val_acc = self._evaluate_acc(self.val_dl)
             
             self.history['train_loss'].append(train_loss)
             self.history['val_loss'].append(val_loss)
@@ -28,34 +29,30 @@ class Learner:
             print(f"Epoch {i+1}/{n_epoch} - Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}, Validation Acc: {val_acc:.4f}")
         
         return self.history
-        
+    
+    def _evaluate_acc(self, dl):
+        total_acc = 0
+        with torch.no_grad():
+            for xb, yb in dl:
+                preds = self.model.predict(xb)
+                total_acc += self.metrics(preds, yb)
+        return total_acc / len(dl)
+
     def _evaluate_loss(self, dl):
         total_loss = 0
         with torch.no_grad():
             for xb, yb in dl:
                 preds = self.model.predict(xb)
-                loss = l2_loss(preds, yb)
+                loss = mnist_loss(preds, yb)
                 total_loss += loss.item()
-        return total_loss / len(dl)
-
-    def evaluate_accuracy(self, dl, sigmoid=False):
-        total_correct = 0
-        total_samples = 0
-        with torch.no_grad():
-            for xb, yb in dl:
-                preds = self.model.predict(xb)
-                corrects = (preds > (0.5 if self.model.__class__.__name__ == "LogisticRegression" else 0.0) ).float() == yb
-                total_correct += corrects.sum().item()
-                total_samples += len(yb)
-        return total_correct / total_samples
+        return total_loss / len(dl)       
 
     def train_epoch(self):
         total_loss = 0
         for i, (xb, yb) in enumerate(self.train_dl):
             preds = self.model.predict(xb)
-            loss = l2_loss(preds, yb)
+            loss = mnist_loss(preds, yb)
             loss.backward()
-
             self.opt.step()
             self.opt.zero_grad()
 

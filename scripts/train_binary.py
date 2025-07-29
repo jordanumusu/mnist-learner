@@ -1,10 +1,11 @@
 
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import src.metrics as metrics
 import torch
 
 
-from src import LinearRegression, Learner, LogisticRegression
+from src import LinearRegression, Learner, LogisticRegression, SimpleNN
 from PIL import Image
 from torch.utils.data import Subset, DataLoader
 
@@ -41,21 +42,30 @@ def main():
     val_dl = DataLoader(val_data, batch_size=64, shuffle=False)  
     test_dl = DataLoader(test_data, batch_size=64, shuffle=False)  
     
-    li_model = LinearRegression()
-    learner = Learner(li_model, train_dl, val_dl)
-    learner.fit(16)
+    # print("\n -------- Linear Regression Model ------------")
+
+    # li_model = LinearRegression()
+    # learner = Learner(model=li_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.lin_acc)
+    # learner.fit(16)
     
-    print("\n")
+    # print("\n -------- Logistic Regression Model ------------")
 
-    lo_model = LogisticRegression()
-    learner1 = Learner(lo_model, train_dl, val_dl)
-    if os.path.exists('../model.pth'):
-        learner1.load_checkpoint('model.pth')
-    else:
-        learner.fit(16)
+    # lo_model = LogisticRegression()
+    # learner = Learner(model=lo_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.log_acc)
+    # learner.fit(16)
 
-    learner1.save_checkpoint('model.pth')
-    learner1.save_training_results('training_history.json')
+
+    print("\n -------- Simple NN Model ------------")
+    nn_model = SimpleNN()
+    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.log_acc, lr=0.1)
+    learner.fit(50)
+
+    # if os.path.exists('../model.pth'):
+    #     learner1.load_checkpoint('model.pth')
+    # else:
+        # learner.fit(16)
+    # learner1.save_checkpoint('model.pth')
+    # learner1.save_training_results('training_history.json')
 
 if __name__ == "__main__":
     main() 

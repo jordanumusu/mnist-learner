@@ -2,7 +2,7 @@ import torch
 
 class BasicOptimiser:
     def __init__(self, params, lr): 
-        self.params = params
+        self.params = list(params)
         self.lr = lr
 
     def step(self):
