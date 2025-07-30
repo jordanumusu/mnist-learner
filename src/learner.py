@@ -17,8 +17,10 @@ class Learner:
         self.history = {'train_loss': [], 'val_loss': [], 'val_acc': []}
 
     def fit(self, n_epoch):
-        for i in range(n_epoch):
-            train_loss = self.train_epoch()
+        for i in range(n_epoch+1):
+            if i > 0:
+                train_loss = self.train_epoch()
+            else: train_loss = self._evaluate_loss(self.train_dl)
             val_loss = self._evaluate_loss(self.val_dl)
             val_acc = self._evaluate_acc(self.val_dl)
             
@@ -26,7 +28,7 @@ class Learner:
             self.history['val_loss'].append(val_loss)
             self.history['val_acc'].append(val_acc)
             
-            print(f"Epoch {i+1}/{n_epoch} - Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}, Validation Acc: {val_acc:.4f}")
+            print(f"{'Pre-training' if i == 0 else f'Epoch {i}/{n_epoch}'} - Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}, Validation Acc: {val_acc:.4f}")
         
         return self.history
     
@@ -43,7 +45,7 @@ class Learner:
         with torch.no_grad():
             for xb, yb in dl:
                 preds = self.model.predict(xb)
-                loss = mnist_loss(preds, yb)
+                loss = l2_loss(preds, yb)
                 total_loss += loss.item()
         return total_loss / len(dl)       
 
@@ -51,7 +53,7 @@ class Learner:
         total_loss = 0
         for i, (xb, yb) in enumerate(self.train_dl):
             preds = self.model.predict(xb)
-            loss = mnist_loss(preds, yb)
+            loss = l2_loss(preds, yb)
             loss.backward()
             self.opt.step()
             self.opt.zero_grad()

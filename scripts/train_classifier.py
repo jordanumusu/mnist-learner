@@ -1,4 +1,3 @@
-
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import src.metrics as metrics
@@ -12,29 +11,34 @@ from torch.utils.data import Subset, DataLoader
 def get_data(train=True, val_split=0.2):
     transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
     dset = datasets.MNIST('./data', train=train, transform=transform, download=True)
-    labels = dset.targets
-
-    indices, = ((labels == 3) | (labels == 7)).nonzero(as_tuple=True)
-    # Create new dataset with binary labels
-    binary_data = []
-    for idx in indices:
-        x, y = dset[idx]
-        binary_label = 1.0 if y == 3 else 0.0
-        binary_data.append((x, binary_label))
+    
+    class OneHotMNIST(torch.utils.data.Dataset):
+        def __init__(self, dataset, num_classes=10):
+            self.dataset = dataset
+            self.num_classes = num_classes
         
-    # Split training data into train and validation
+        def __len__(self):
+            return len(self.dataset)
+        
+        def __getitem__(self, idx):
+            data, label = self.dataset[idx]
+            one_hot_label = torch.zeros(self.num_classes)
+            one_hot_label[label] = 1.0
+            return data, one_hot_label
+    
+    dset = OneHotMNIST(dset)
+    
     if train and val_split > 0:
-        n_samples = len(binary_data)
+        n_samples = len(dset)
         n_val = int(n_samples * val_split)
         n_train = n_samples - n_val
         
         train_data, val_data = torch.utils.data.random_split(
-            binary_data, [n_train, n_val]
+            dset, [n_train, n_val]
         )
         return train_data, val_data
+    return dset
     
-    return binary_data
-
 def main():
     train_data, val_data = get_data()  # 80/20 split by default
     test_data = get_data(False)
@@ -44,21 +48,21 @@ def main():
     
     # print("\n -------- Linear Regression Model ------------")
 
-    # li_model = LinearRegression()
-    # learner = Learner(model=li_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.lin_acc)
+    # li_model = LinearRegression(n_classes=10)
+    # learner = Learner(model=li_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc)
     # learner.fit(16)
     
     # print("\n -------- Logistic Regression Model ------------")
 
-    # lo_model = LogisticRegression()
-    # learner = Learner(model=lo_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.log_acc)
+    # lo_model = LogisticRegression(n_classes=10)
+    # learner = Learner(model=lo_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc)
     # learner.fit(16)
 
 
     print("\n -------- Simple NN Model ------------")
-    nn_model = SimpleNN()
-    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.log_acc, lr=0.1)
-    learner.fit(5)
+    nn_model = SimpleNN(n_classes=10)
+    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc, lr=0.1)
+    learner.fit(16)
 
     # if os.path.exists('../model.pth'):
     #     learner1.load_checkpoint('model.pth')
@@ -66,11 +70,7 @@ def main():
         # learner.fit(16)
     # learner1.save_checkpoint('model.pth')
     # learner1.save_training_results('training_history.json')
-
+    
     # TODO: Test trained model against test data set.
-
 if __name__ == "__main__":
     main() 
-
-
-
