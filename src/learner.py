@@ -7,14 +7,17 @@ from .losses import l1_loss, l2_loss, mnist_loss
 from .optimizer import BasicOptimiser
 
 class Learner:
-    def __init__(self, model, train_dl, val_dl, metrics, lr=0.001):
+    def __init__(self, model, train_dl, val_dl, metrics, lr=0.001, device=None):
+        self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = model
+        self.model.to(self.device)
         self.lr = lr
         self.train_dl = train_dl
         self.val_dl = val_dl
         self.opt = BasicOptimiser(self.model.params, self.lr)
         self.metrics = metrics
         self.history = {'train_loss': [], 'val_loss': [], 'val_acc': []}
+        print(f"Using device: {self.device}")
 
     def fit(self, n_epoch):
         for i in range(n_epoch+1):
@@ -36,6 +39,7 @@ class Learner:
         total_acc = 0
         with torch.no_grad():
             for xb, yb in dl:
+                xb, yb = xb.to(self.device), yb.to(self.device)
                 preds = self.model.predict(xb)
                 total_acc += self.metrics(preds, yb)
         return total_acc / len(dl)
@@ -44,6 +48,7 @@ class Learner:
         total_loss = 0
         with torch.no_grad():
             for xb, yb in dl:
+                xb, yb = xb.to(self.device), yb.to(self.device)
                 preds = self.model.predict(xb)
                 loss = l2_loss(preds, yb)
                 total_loss += loss.item()
@@ -52,6 +57,7 @@ class Learner:
     def train_epoch(self):
         total_loss = 0
         for i, (xb, yb) in enumerate(self.train_dl):
+            xb, yb = xb.to(self.device), yb.to(self.device)
             preds = self.model.predict(xb)
             loss = l2_loss(preds, yb)
             loss.backward()
@@ -73,7 +79,7 @@ class Learner:
     
     def load_checkpoint(self, filepath):
         """Load model weights from a file"""
-        checkpoint = torch.load(filepath)
+        checkpoint = torch.load(filepath, map_location=self.device)
         self.model.weights = checkpoint['weights']
         self.model.bias = checkpoint['bias']
         self.history = checkpoint.get('history', {'train_loss': [], 'val_loss': [], 'val_acc': []})

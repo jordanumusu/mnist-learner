@@ -58,11 +58,10 @@ def main():
     # learner = Learner(model=lo_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc)
     # learner.fit(16)
 
-
     print("\n -------- Simple NN Model ------------")
     nn_model = SimpleNN(n_classes=10)
-    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc, lr=0.1)
-    learner.fit(16)
+    learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc, lr=0.03)
+    learner.fit(10)
 
     # if os.path.exists('../model.pth'):
     #     learner1.load_checkpoint('model.pth')
