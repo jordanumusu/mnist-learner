@@ -6,8 +6,7 @@ class BasicOptimiser:
         self.lr = lr
 
     def step(self):
-        with torch.no_grad():
-            for p in self.params: p -= p.grad * self.lr
+        for p in self.params: p -= p.g * self.lr
 
     def zero_grad(self):
-        for p in self.params: p.grad = None
+        for p in self.params: p.g = None

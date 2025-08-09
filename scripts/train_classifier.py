@@ -1,10 +1,10 @@
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import src.metrics as metrics
+import src.models as models
 import torch
 
-
-from src import LinearRegression, Learner, LogisticRegression, SimpleNN
+from src.learner import Learner
 from PIL import Image
 from torch.utils.data import Subset, DataLoader
 
@@ -48,18 +48,18 @@ def main():
     
     # print("\n -------- Linear Regression Model ------------")
 
-    # li_model = LinearRegression(n_classes=10)
+    # li_model = models.LinearRegression(n_classes=10)
     # learner = Learner(model=li_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc)
     # learner.fit(16)
     
     # print("\n -------- Logistic Regression Model ------------")
 
-    # lo_model = LogisticRegression(n_classes=10)
+    # lo_model = models.LogisticRegression(n_classes=10)
     # learner = Learner(model=lo_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc)
     # learner.fit(16)
 
     print("\n -------- Simple NN Model ------------")
-    nn_model = SimpleNN(n_classes=10)
+    nn_model = models.SimpleNN(n_classes=10)
     learner = Learner(model=nn_model, train_dl=train_dl, val_dl=val_dl, metrics=metrics.multi_class_acc, lr=0.03)
     learner.fit(10)
 

@@ -3,7 +3,6 @@ import json
 from pathlib import Path
 
 from torch.utils.data import DataLoader
-from .losses import l1_loss, l2_loss, mnist_loss
 from .optimizer import BasicOptimiser
 
 class Learner:
@@ -37,30 +36,26 @@ class Learner:
     
     def _evaluate_acc(self, dl):
         total_acc = 0
-        with torch.no_grad():
-            for xb, yb in dl:
-                xb, yb = xb.to(self.device), yb.to(self.device)
-                preds = self.model.predict(xb)
-                total_acc += self.metrics(preds, yb)
+        for xb, yb in dl:
+            xb, yb = xb.to(self.device), yb.to(self.device)
+            preds, loss = self.model.forward(xb, yb)
+            total_acc += self.metrics(preds, yb)
         return total_acc / len(dl)
 
     def _evaluate_loss(self, dl):
         total_loss = 0
-        with torch.no_grad():
-            for xb, yb in dl:
-                xb, yb = xb.to(self.device), yb.to(self.device)
-                preds = self.model.predict(xb)
-                loss = l2_loss(preds, yb)
-                total_loss += loss.item()
+        for xb, yb in dl:
+            xb, yb = xb.to(self.device), yb.to(self.device)
+            _, loss = self.model.forward(xb, yb)
+            total_loss += loss.item()
         return total_loss / len(dl)       
 
     def train_epoch(self):
         total_loss = 0
         for i, (xb, yb) in enumerate(self.train_dl):
             xb, yb = xb.to(self.device), yb.to(self.device)
-            preds = self.model.predict(xb)
-            loss = l2_loss(preds, yb)
-            loss.backward()
+            preds, loss = self.model.forward(xb, yb)
+            self.model.backward()
             self.opt.step()
             self.opt.zero_grad()
 
